@@ -1,0 +1,10 @@
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.29
+pydantic>=2.6,<3.0
+SQLAlchemy>=2.0,<3.0
+PyMySQL>=1.1
+cryptography>=42.0        # necesario para la autenticación caching_sha2_password de MySQL 8
+pandas>=2.1
+numpy>=1.26
+scikit-learn>=1.4
+joblib>=1.3

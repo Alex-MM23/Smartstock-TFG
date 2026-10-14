@@ -1,0 +1,26 @@
+{
+  "modelo": "gradient_boosting",
+  "test_days": 90,
+  "metricas_test": {
+    "baseline_lag_7": {
+      "rmse": 7.578001432936827,
+      "mae": 5.523449074074075
+    },
+    "random_forest": {
+      "rmse": 5.5438292277362144,
+      "mae": 4.047355111685034
+    },
+    "gradient_boosting": {
+      "rmse": 5.286906933968426,
+      "mae": 3.9419640842996633
+    }
+  },
+  "backtest_recursivo_7d": {
+    "rmse": 6.162874138398052,
+    "mae": 4.31660890214884,
+    "n": 1008,
+    "horizonte_dias": 7
+  },
+  "version": "gradient_boost-202610141536",
+  "trained_at": "2026-10-14T15:36:18.941221+00:00"
+}
