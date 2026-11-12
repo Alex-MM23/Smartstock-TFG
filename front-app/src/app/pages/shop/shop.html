@@ -1,0 +1,232 @@
+<div class="shop-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="container">
+      <div class="page-header-content">
+        <div>
+          <h1 class="page-title">Catálogo de Productos</h1>
+          <p class="page-subtitle">
+            Productos sincronizados en tiempo real con la base de datos MySQL.
+            Stock actualizado al instante vía FastAPI.
+          </p>
+        </div>
+        <div class="page-header-actions">
+          <span class="badge badge-success" *ngIf="!loading && products.length > 0">
+            {{ products.length }} productos disponibles
+          </span>
+          <span class="badge badge-warning" *ngIf="loading">
+            Cargando...
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-main">
+    <div class="container">
+      <!-- Error State -->
+      <div *ngIf="errorMessage" class="alert alert-error mb-6" role="alert">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <div>
+          <strong>Error al cargar el catálogo</strong>
+          <p class="mb-0">{{ errorMessage }}</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" (click)="loadProductsFromDatabase()" type="button">
+          Reintentar
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading && !errorMessage" class="loading-state">
+        <div class="skeleton" style="height: 200px; border-radius: var(--border-radius-lg);"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="skeleton card" style="height: 380px;"></div>
+          }
+        </div>
+      </div>
+
+      <!-- Product Grid -->
+      <div *ngIf="!loading && !errorMessage" class="shop-layout">
+        <!-- Sidebar Filters -->
+        <aside class="sidebar-filters" aria-label="Filtros de productos">
+          <div class="card p-6 sticky-top" style="top: calc(var(--header-height) + var(--space-6));">
+            <header class="sidebar-header mb-6">
+              <h2 class="sidebar-title">Filtrar</h2>
+              <button class="btn btn-ghost btn-sm" (click)="clearFilters()" type="button" *ngIf="hasActiveFilters">
+                Limpiar todo
+              </button>
+            </header>
+
+            <!-- Search -->
+            <div class="filter-group mb-6">
+              <label for="search-input" class="form-label">Buscar productos</label>
+              <div class="search-input-wrapper">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input
+                  id="search-input"
+                  type="search"
+                  [(ngModel)]="searchTerm"
+                  (input)="applyFilters()"
+                  placeholder="Ej. Sensor, Gateway, RFID..."
+                  class="form-input"
+                  aria-describedby="search-hint"
+                />
+              </div>
+              <span id="search-hint" class="text-tertiary text-xs">Busca por nombre o categoría</span>
+            </div>
+
+            <!-- Categories -->
+            <div class="filter-group mb-6">
+              <label class="form-label">Categorías</label>
+              <div class="category-list" role="group" aria-label="Categorías de productos">
+                <button
+                  type="button"
+                  class="category-btn"
+                  [class.active]="selectedCategory === 'All'"
+                  (click)="filterByCategory('All')"
+                >
+                  <span class="category-name">Todas</span>
+                  <span class="category-count">{{ getCategoryCount('All') }}</span>
+                </button>
+                @for (cat of categories; track cat) {
+                  <button
+                    type="button"
+                    class="category-btn"
+                    [class.active]="selectedCategory === cat"
+                    (click)="filterByCategory(cat)"
+                  >
+                    <span class="category-name">{{ cat }}</span>
+                    <span class="category-count">{{ getCategoryCount(cat) }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Price Range -->
+            <div class="filter-group mb-6">
+              <label class="form-label">Rango de precio</label>
+              <div class="price-range">
+                <input type="range" min="0" max="500" [(ngModel)]="maxPrice" (input)="applyFilters()" class="range-input" />
+                <div class="range-labels">
+                  <span>0 €</span>
+                  <span>{{ maxPrice }} €</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stock Filter -->
+            <div class="filter-group mb-6">
+              <label class="form-label flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="showOnlyInStock"
+                  (change)="applyFilters()"
+                  class="form-checkbox"
+                />
+                <span>Solo productos en stock</span>
+              </label>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Product Grid -->
+        <section class="product-section" aria-labelledby="products-heading">
+          <div class="product-header mb-6" *ngIf="filteredProducts.length > 0">
+            <div class="product-results">
+              <p class="text-secondary">
+                Mostrando <strong>{{ filteredProducts.length }}</strong> de <strong>{{ products.length }}</strong> productos
+              </p>
+            </div>
+            <div class="product-sort">
+              <label for="sort-select" class="visually-hidden">Ordenar por</label>
+              <select id="sort-select" [(ngModel)]="sortBy" (change)="applyFilters()" class="form-input" style="width: auto;">
+                <option value="name">Nombre (A-Z)</option>
+                <option value="name-desc">Nombre (Z-A)</option>
+                <option value="price-asc">Precio: menor a mayor</option>
+                <option value="price-desc">Precio: mayor a menor</option>
+                <option value="stock">Stock disponible</option>
+              </select>
+            </div>
+          </div>
+
+          <div *ngIf="filteredProducts.length > 0" class="product-grid" role="list">
+            @for (product of filteredProducts; track product.id; let i = $index) {
+              <article class="product-card card" role="listitem">
+                <div class="product-image-wrapper">
+                  <img
+                    [src]="product.image || placeholderImage"
+                    [alt]="product.title"
+                    class="product-image"
+                    [loading]="i === 0 ? 'eager' : 'lazy'"
+                  />
+                  <div class="product-badges">
+                    <span class="badge badge-primary">{{ product.category || 'General' }}</span>
+                    <span class="badge" [class.badge-success]="product.cantidad > 5" [class.badge-warning]="product.cantidad > 0 && product.cantidad <= 5" [class.badge-error]="product.cantidad <= 0">
+                      {{ getStockLabel(product.cantidad) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="product-content">
+                  <h3 class="product-title">{{ product.title }}</h3>
+                  <p class="product-description">
+                    {{ getProductDescription(product) }}
+                  </p>
+                  <div class="product-footer">
+                    <div class="product-price-wrapper">
+                      <span class="product-price">{{ product.price | currency:'EUR' }}</span>
+                      <span class="product-stock" [class.in-stock]="product.cantidad > 0" [class.out-of-stock]="product.cantidad <= 0">
+                        {{ product.cantidad }} en stock
+                      </span>
+                    </div>
+                    <button
+                      (click)="addToCart(product)"
+                      class="btn btn-primary btn-block"
+                      [disabled]="product.cantidad <= 0"
+                      [attr.aria-label]="'Añadir ' + product.title + ' al carrito'"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 0 1 0 8"/>
+                      </svg>
+                      {{ product.cantidad > 0 ? 'Añadir al carrito' : 'Agotado' }}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="filteredProducts.length === 0 && !loading" class="empty-state card p-8 text-center">
+            <div class="empty-icon mb-4">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+                <path d="M8 8l6 6"/>
+              </svg>
+            </div>
+            <h2 class="mb-2">No se encontraron productos</h2>
+            <p class="text-secondary mb-6">
+              {{ searchTerm || selectedCategory !== 'All'
+                ? 'Intenta ajustar tus filtros o términos de búsqueda.'
+                : 'No hay productos disponibles en la base de datos en este momento.' }}
+            </p>
+            <button class="btn btn-outline" (click)="clearFilters()" type="button" *ngIf="hasActiveFilters">
+              Limpiar filtros
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>

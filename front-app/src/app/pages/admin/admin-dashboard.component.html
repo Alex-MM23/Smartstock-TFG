@@ -1,0 +1,587 @@
+<div class="admin-dashboard">
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="header-content">
+      <div>
+        <h1 class="page-title">Panel de Administración</h1>
+        <p class="page-subtitle">Gestión completa de productos, pedidos y métricas del sistema con IA</p>
+      </div>
+      <span class="badge badge-primary admin-badge">Administrador</span>
+    </div>
+  </header>
+
+  <!-- Error/Loading -->
+  <div *ngIf="errorMessage" class="alert alert-error mb-6" role="alert">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="15" y1="9" x2="9" y2="15"/>
+      <line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    <span>{{ errorMessage }}</span>
+    <button class="btn btn-ghost btn-sm" (click)="loadDashboardData()" type="button">Reintentar</button>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <div class="skeleton" style="height: 120px; border-radius: var(--border-radius-lg);"></div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="skeleton card" style="height: 140px;"></div>
+      }
+    </div>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading && !errorMessage" class="admin-content">
+    <!-- Stats Grid -->
+    <section class="stats-section mb-8" aria-labelledby="stats-heading">
+      <h2 id="stats-heading" class="visually-hidden">Métricas principales</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (stat of stats; track stat.title) {
+          <article class="stat-card card p-6" [style.border-left-color]="stat.color">
+            <div class="stat-card-content">
+              <div class="stat-icon" [style.background-color]="stat.color + '20'" [style.color]="stat.color">
+                <span [innerHTML]="stat.icon"></span>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value">{{ stat.value }}</div>
+                <div class="stat-label">{{ stat.title }}</div>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+
+    <!-- Tabs Navigation -->
+    <nav class="admin-tabs mb-6" role="tablist" aria-label="Secciones del panel">
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab === 'overview'"
+        (click)="setActiveTab('overview')"
+        [class.active]="activeTab === 'overview'"
+        class="tab-btn"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Resumen
+      </button>
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab === 'products'"
+        (click)="setActiveTab('products')"
+        [class.active]="activeTab === 'products'"
+        class="tab-btn"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        Productos (IA)
+      </button>
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab === 'orders'"
+        (click)="setActiveTab('orders')"
+        [class.active]="activeTab === 'orders'"
+        class="tab-btn"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-2">
+          <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+          <path d="M3 20h18"/>
+          <path d="M7 16v6M17 16v6"/>
+        </svg>
+        Pedidos
+      </button>
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab === 'purchase-orders'"
+        (click)="setActiveTab('purchase-orders')"
+        [class.active]="activeTab === 'purchase-orders'"
+        class="tab-btn"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        Órdenes de Compra (IA)
+      </button>
+    </nav>
+
+    <!-- Overview Tab -->
+    <div *ngIf="activeTab === 'overview'" class="tab-panel" role="tabpanel" aria-labelledby="overview-tab">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <article class="overview-card card p-6">
+          <div class="overview-icon" style="background-color: var(--color-success-light); color: var(--color-success);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M4 7V4h16v3"/>
+              <path d="M9 20h6"/>
+              <path d="M12 4v16"/>
+              <rect x="2" y="7" width="20" height="13" rx="2"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="mb-2">Base de Datos</h3>
+            <p class="text-success font-medium">✅ Conectada (MySQL)</p>
+            <p class="text-tertiary text-sm mt-1">v_stock_alerta operativa</p>
+          </div>
+        </article>
+
+        <article class="overview-card card p-6">
+          <div class="overview-icon" style="background-color: var(--color-primary-light); color: var(--color-primary);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="mb-2">Modelo ML</h3>
+            <p class="text-primary font-medium">✅ Cargado (Gradient Boosting)</p>
+            <p class="text-tertiary text-sm mt-1">RMSE: 5.29 | Backtest recursivo</p>
+          </div>
+        </article>
+
+        <article class="overview-card card p-6">
+          <div class="overview-icon" style="background-color: var(--color-accent-light); color: var(--color-accent);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <path d="M8 21h8M12 17v4"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="mb-2">API REST</h3>
+            <p class="text-warning font-medium">✅ Operativa en puerto 8000</p>
+            <p class="text-tertiary text-sm mt-1">Docs en /docs (Swagger UI)</p>
+          </div>
+        </article>
+
+        <article class="overview-card card p-6">
+          <div class="overview-icon" style="background-color: var(--color-secondary-light); color: var(--color-secondary);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <path d="M8 21h8M12 17v4"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="mb-2">Frontend</h3>
+            <p class="text-info font-medium">✅ Angular 18 en puerto 4200</p>
+            <p class="text-tertiary text-sm mt-1">Nginx + Docker multi-stage</p>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- Products Tab (IA-Enhanced) -->
+    <div *ngIf="activeTab === 'products'" class="tab-panel" role="tabpanel" aria-labelledby="products-tab">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Catálogo de Productos con IA</h2>
+          <span class="badge badge-primary">{{ filteredProducts.length }} / {{ products.length }} productos</span>
+        </div>
+
+        <!-- Product Filters -->
+        <div class="card-body p-4 border-bottom bg-muted">
+          <div class="filter-row">
+            <div class="filter-group flex-1 min-w-200">
+              <label for="product-search" class="form-label">Buscar</label>
+              <div class="search-input-wrapper">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input
+                  id="product-search"
+                  type="search"
+                  [(ngModel)]="productSearchTerm"
+                  (input)="onProductSearchChange()"
+                  placeholder="Buscar por nombre, SKU o categoría..."
+                  class="form-input"
+                />
+              </div>
+            </div>
+            <div class="filter-group min-w-180">
+              <label for="product-stock-filter" class="form-label">Estado Stock (IA)</label>
+              <select
+                id="product-stock-filter"
+                [(ngModel)]="productStockFilter"
+                (change)="onProductStockFilterChange()"
+                class="form-input"
+              >
+                <option value="all">Todos</option>
+                <option value="normal">Stock Normal (IA)</option>
+                <option value="low">Bajo Stock / Crítico (IA)</option>
+                <option value="critical">Riesgo Crítico (IA)</option>
+                <option value="out">Agotado</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="form-label">&nbsp;</label>
+              <div class="flex items-end">
+                <button
+                  type="button"
+                  class="btn btn-outline"
+                  (click)="clearProductFilters()"
+                  [disabled]="productSearchTerm === '' && productStockFilter === 'all'"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-1">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="table" role="grid">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">SKU</th>
+                <th scope="col">Producto</th>
+                <th scope="col">Categoría</th>
+                <th scope="col">Precio</th>
+                <th scope="col">Stock</th>
+                <th scope="col">Días Stock</th>
+                <th scope="col">Velocidad/Día</th>
+                <th scope="col">Riesgo Crítico</th>
+                <th scope="col">Demanda 7d</th>
+                <th scope="col">Stock Rec.</th>
+                <th scope="col">Reponer</th>
+                <th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of filteredProducts; track p.id_producto) {
+                <tr>
+                  <td><code class="text-tertiary">{{ p.id_producto }}</code></td>
+                  <td><code class="text-tertiary">{{ p.sku }}</code></td>
+                  <td>
+                    <div class="product-cell">
+                      <span class="font-medium">{{ p.nombre }}</span>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-neutral">{{ p.categoria || 'General' }}</span></td>
+                  <td class="font-medium">{{ p.precio_unitario | currency:'EUR' }}</td>
+                  <td class="font-mono font-medium">{{ p.stock_actual }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getDaysStockBadgeClass(p.dias_stock_restante)">
+                      {{ getDaysStockLabel(p.dias_stock_restante) }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge badge-info">
+                      {{ p.velocidad_consumo_diaria !== null ? p.velocidad_consumo_diaria.toFixed(2) : 'N/A' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="p.riesgo_critico ? 'badge-error' : 'badge-success'">
+                      {{ p.riesgo_critico ? '⚠️ SÍ' : '✅ NO' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="font-mono font-medium" [class.text-warning]="p.demanda_estimada_7d && p.demanda_estimada_7d > p.stock_actual">
+                      {{ p.demanda_estimada_7d !== null ? p.demanda_estimada_7d.toFixed(1) : 'N/A' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="font-mono font-medium">
+                      {{ p.stock_recomendado !== null ? p.stock_recomendado : 'N/A' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="font-mono font-medium" [class.text-error]="p.unidades_a_reponer && p.unidades_a_reponer > 0" [class.text-success]="!p.unidades_a_reponer || p.unidades_a_reponer === 0">
+                      {{ p.unidades_a_reponer !== null ? p.unidades_a_reponer : '0' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getStockBadgeClass(p)">
+                      {{ getStockStatus(p) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+              @if (filteredProducts.length === 0) {
+                <tr>
+                  <td colspan="13" class="empty-row">No hay productos que coincidan con los filtros</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders Tab -->
+    <div *ngIf="activeTab === 'orders'" class="tab-panel" role="tabpanel" aria-labelledby="orders-tab">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Historial de Pedidos</h2>
+          <span class="badge badge-primary">{{ filteredOrders.length }} / {{ orders.length }} pedidos</span>
+        </div>
+
+        <!-- Order Filters -->
+        <div class="card-body p-4 border-bottom bg-muted">
+          <div class="filter-row">
+            <div class="filter-group min-w-180">
+              <label for="order-status-filter" class="form-label">Estado</label>
+              <select
+                id="order-status-filter"
+                [(ngModel)]="orderStatusFilter"
+                (change)="onOrderStatusFilterChange()"
+                class="form-input"
+              >
+                <option value="all">Todos</option>
+                <option value="completed">Completado</option>
+                <option value="processing">Procesando</option>
+                <option value="shipped">Enviado</option>
+                <option value="delivered">Entregado</option>
+                <option value="cancelled">Cancelado</option>
+                <option value="pending">Pendiente</option>
+              </select>
+            </div>
+            <div class="filter-group min-w-180">
+              <label for="order-date-from" class="form-label">Desde</label>
+              <input
+                id="order-date-from"
+                type="date"
+                [(ngModel)]="orderDateFrom"
+                (change)="onOrderDateFilterChange()"
+                class="form-input"
+              />
+            </div>
+            <div class="filter-group min-w-180">
+              <label for="order-date-to" class="form-label">Hasta</label>
+              <input
+                id="order-date-to"
+                type="date"
+                [(ngModel)]="orderDateTo"
+                (change)="onOrderDateFilterChange()"
+                class="form-input"
+              />
+            </div>
+            <div class="filter-group">
+              <label class="form-label">&nbsp;</label>
+              <div class="flex items-end">
+                <button
+                  type="button"
+                  class="btn btn-outline"
+                  (click)="clearOrderFilters()"
+                  [disabled]="orderStatusFilter === 'all' && orderDateFrom === '' && orderDateTo === ''"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-1">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="table" role="grid">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Usuario</th>
+                <th scope="col">Total</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Items</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (o of filteredOrders; track o.id) {
+                <tr>
+                  <td><code class="text-tertiary">#{{ o.id }}</code></td>
+                  <td>Usuario #{{ o.user_id }}</td>
+                  <td class="font-medium">{{ o.total_amount | currency:'EUR' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getOrderStatusClass(o.status)">
+                      {{ getOrderStatusLabel(o.status) }}
+                    </span>
+                  </td>
+                  <td>{{ o.created_at ? (o.created_at | date:'dd/MM/yyyy HH:mm') : 'N/A' }}</td>
+                  <td>{{ (o.items || []).length }}</td>
+                </tr>
+              }
+              @if (filteredOrders.length === 0) {
+                <tr>
+                  <td colspan="6" class="empty-row">No hay pedidos que coincidan con los filtros</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Purchase Orders Tab (IA-Generated) -->
+    <div *ngIf="activeTab === 'purchase-orders'" class="tab-panel" role="tabpanel" aria-labelledby="purchase-orders-tab">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Órdenes de Compra (Generadas por IA)</h2>
+          <div class="flex gap-2">
+            <span class="badge badge-primary">{{ filteredPurchaseOrders.length }} / {{ purchaseOrders.length }} órdenes</span>
+            <button class="btn btn-primary btn-sm" (click)="autoGeneratePOs()" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-1">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              Generar Automáticamente
+            </button>
+          </div>
+        </div>
+
+        <!-- Purchase Order Filters -->
+        <div class="card-body p-4 border-bottom bg-muted">
+          <div class="filter-row">
+            <div class="filter-group flex-1 min-w-200">
+              <label for="po-search" class="form-label">Buscar</label>
+              <div class="search-input-wrapper">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input
+                  id="po-search"
+                  type="search"
+                  [(ngModel)]="poSearchTerm"
+                  (input)="onPOSearchChange()"
+                  placeholder="Buscar por proveedor, producto o SKU..."
+                  class="form-input"
+                />
+              </div>
+            </div>
+            <div class="filter-group min-w-180">
+              <label for="po-status-filter" class="form-label">Estado</label>
+              <select
+                id="po-status-filter"
+                [(ngModel)]="poStatusFilter"
+                (change)="onPOStatusFilterChange()"
+                class="form-input"
+              >
+                <option value="all">Todos</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Aprobada">Aprobada</option>
+                <option value="Recibida">Recibida</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="form-label">&nbsp;</label>
+              <div class="flex items-end">
+                <button
+                  type="button"
+                  class="btn btn-outline"
+                  (click)="clearPOFilters()"
+                  [disabled]="poStatusFilter === 'all' && poSearchTerm === ''"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-1">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="table" role="grid">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Proveedor</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Origen</th>
+                <th scope="col">Total Und.</th>
+                <th scope="col">Productos</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (po of filteredPurchaseOrders; track po.id_orden_compra) {
+                <tr>
+                  <td><code class="text-tertiary">#{{ po.id_orden_compra }}</code></td>
+                  <td>
+                    <div class="font-medium">{{ po.proveedor_nombre }}</div>
+                    <div class="text-sm text-tertiary">ID: {{ po.id_proveedor }}</div>
+                  </td>
+                  <td>{{ po.fecha_creacion ? (po.fecha_creacion | date:'dd/MM/yyyy HH:mm') : 'N/A' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getPOStatusClass(po.estado)">
+                      {{ po.estado }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [class.badge-info]="po.generada_por_ia" [class.badge-neutral]="!po.generada_por_ia">
+                      {{ po.generada_por_ia ? '🤖 IA' : '👤 Manual' }}
+                    </span>
+                  </td>
+                  <td class="font-mono font-medium">{{ po.total_unidades }}</td>
+                  <td>
+                    <div *ngFor="let item of po.items" class="text-sm">
+                      <span class="font-medium">{{ item.product_name }}</span>
+                      <span class="text-tertiary"> ({{ item.product_sku }})</span>
+                      <span class="badge badge-neutral">x{{ item.cantidad }}</span>
+                    </div>
+                    @if (!po.items || po.items.length === 0) {
+                      <span class="text-tertiary">Sin items</span>
+                    }
+                  </td>
+                  <td>
+                    <div class="flex gap-1 flex-wrap">
+                      <!-- Approve button - only for Pendiente -->
+                      <button
+                        *ngIf="po.estado === 'Pendiente'"
+                        class="btn btn-success btn-sm"
+                        (click)="approvePurchaseOrder(po.id_orden_compra)"
+                        type="button"
+                        [disabled]="loading"
+                      >
+                        Aprobar
+                      </button>
+                      <!-- Receive button - only for Aprobada -->
+                      <button
+                        *ngIf="po.estado === 'Aprobada'"
+                        class="btn btn-primary btn-sm"
+                        (click)="receivePurchaseOrder(po.id_orden_compra)"
+                        type="button"
+                        [disabled]="loading"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-1">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="17 8 12 3 7 8"/>
+                          <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        Recibir
+                      </button>
+                      <!-- Status badge for Recibida -->
+                      <span *ngIf="po.estado === 'Recibida'" class="badge badge-success self-center">✅ Recibida</span>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @if (filteredPurchaseOrders.length === 0) {
+                <tr>
+                  <td colspan="8" class="empty-row">No hay órdenes de compra que coincidan con los filtros</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

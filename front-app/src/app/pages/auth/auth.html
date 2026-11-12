@@ -1,0 +1,180 @@
+<div class="auth-page">
+  <div class="auth-container">
+    <div class="auth-card card">
+      <!-- Header -->
+      <header class="auth-header text-center mb-8">
+        <div class="auth-logo mb-4">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" class="text-primary">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <h1 class="auth-title mb-2">{{ isLoginMode ? 'Bienvenido de nuevo' : 'Crea tu cuenta' }}</h1>
+        <p class="auth-subtitle text-secondary">
+          {{ isLoginMode ? 'Inicia sesión para acceder a tu panel de SmartStock AI' : 'Regístrate para empezar a optimizar tu inventario con IA' }}
+        </p>
+      </header>
+
+      <!-- Error Alert -->
+      <div *ngIf="errorMessage" class="alert alert-error mb-6" role="alert">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- Form -->
+      <form (ngSubmit)="onSubmit()" class="auth-form" #authForm="ngForm">
+        <!-- Name Field (Register only) -->
+        <div class="form-group" *ngIf="!isLoginMode">
+          <label for="name" class="form-label">Nombre Completo</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input
+              id="name"
+              type="text"
+              [(ngModel)]="credentials.name"
+              name="name"
+              placeholder="Ej. Alex Santiago"
+              class="form-input"
+              required
+              #nameInput="ngModel"
+              [class.is-invalid]="nameInput.invalid && (nameInput.dirty || nameInput.touched)"
+            />
+          </div>
+          <div class="invalid-feedback" *ngIf="nameInput.invalid && (nameInput.dirty || nameInput.touched)">
+            El nombre es obligatorio
+          </div>
+        </div>
+
+        <!-- Email Field -->
+        <div class="form-group">
+          <label for="email" class="form-label">Correo Electrónico</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <input
+              id="email"
+              type="email"
+              [(ngModel)]="credentials.email"
+              name="email"
+              placeholder="usuario@smartstock.com"
+              class="form-input"
+              required
+              email
+              autocomplete="email"
+              #emailInput="ngModel"
+              [class.is-invalid]="emailInput.invalid && (emailInput.dirty || emailInput.touched)"
+            />
+          </div>
+          <div class="invalid-feedback" *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)">
+            <span *ngIf="emailInput.errors?.['required']">El correo es obligatorio</span>
+            <span *ngIf="emailInput.errors?.['email']">Introduce un correo válido</span>
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+          <label for="password" class="form-label">Contraseña</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="credentials.password"
+              name="password"
+              placeholder="••••••••"
+              class="form-input"
+              required
+              minlength="6"
+              autocomplete="{{ isLoginMode ? 'current-password' : 'new-password' }}"
+              #passwordInput="ngModel"
+              [class.is-invalid]="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="showPassword = !showPassword"
+              [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            >
+              <svg *ngIf="!showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg *ngIf="showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <div class="invalid-feedback" *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)">
+            <span *ngIf="passwordInput.errors?.['required']">La contraseña es obligatoria</span>
+            <span *ngIf="passwordInput.errors?.['minlength']">Mínimo 6 caracteres</span>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="btn btn-primary btn-block btn-lg mt-2"
+          [disabled]="loading || authForm.invalid"
+        >
+          <span *ngIf="loading" class="flex items-center justify-center gap-2">
+            <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+              <path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1">
+                <animateTransform attributeName="transform" type="rotate" dur="1s" from="0 12 12" to="360 12 12" repeatCount="indefinite"/>
+              </path>
+            </svg>
+            Procesando...
+          </span>
+          <span *ngIf="!loading">
+            {{ isLoginMode ? 'Iniciar Sesión' : 'Crear Cuenta' }}
+          </span>
+        </button>
+      </form>
+
+      <!-- Switch Mode -->
+      <div class="auth-switch text-center mt-6">
+        <p class="text-secondary mb-2">
+          {{ isLoginMode ? '¿No tienes una cuenta?' : '¿Ya tienes cuenta?' }}
+        </p>
+        <button
+          type="button"
+          (click)="toggleMode()"
+          class="btn btn-ghost"
+        >
+          {{ isLoginMode ? 'Regístrate gratis' : 'Iniciar sesión' }}
+        </button>
+      </div>
+
+      <!-- Demo Credentials (Login mode only) -->
+      <div class="demo-credentials mt-6 p-4 bg-secondary rounded-lg" *ngIf="isLoginMode">
+        <p class="text-xs text-tertiary mb-2 font-medium">Credenciales de prueba:</p>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="p-2 bg-card rounded border">
+            <span class="font-medium text-primary">Admin:</span>
+            <div class="font-mono text-secondary">admin@smartstock.com</div>
+            <div class="font-mono text-secondary">admin123</div>
+          </div>
+          <div class="p-2 bg-card rounded border">
+            <span class="font-medium text-success">Usuario:</span>
+            <div class="font-mono text-secondary">usuario@test.com</div>
+            <div class="font-mono text-secondary">test123</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

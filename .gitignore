@@ -1,0 +1,47 @@
+# Root .gitignore for SmartStock TFG
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+
+# Backend specific
+Back/__pycache__/
+Back/**/__pycache__/
+Back/*.py[cod]
+Back/*$py.class
+Back/venv/
+Back/env/
+Back/.venv
+Back/artifacts/*.joblib
+Back/artifacts/*.json
+Back/server.log
+
+# Frontend specific
+front-app/node_modules/
+front-app/dist/
+front-app/.angular/
+front-app/coverage/
+front-app/npm-debug.log
+front-app/yarn-error.log
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/

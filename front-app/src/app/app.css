@@ -1,0 +1,21 @@
+/* App Component Styles - Minimal, uses global design system */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-main-container {
+  flex: 1;
+  width: 100%;
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-12);
+}
+
+.app-footer {
+  padding: var(--space-8) 0;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  margin-top: auto;
+}

@@ -14,9 +14,16 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
-    build: .
+    build:
+      context: ./Back
+      dockerfile: Dockerfile
     container_name: smartstock_api
     restart: always
     ports:
@@ -27,8 +34,22 @@ services:
       - DB_USER=smartstock
       - DB_PASSWORD=smartstock_pass
       - DB_NAME=smartstock
+      - SECRET_KEY=${SECRET_KEY:-super-secret-change-in-production-min-32-chars}
+      - ENVIRONMENT=production
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
+  front:
+    build:
+      context: ./front-app
+      dockerfile: Dockerfile
+    container_name: smartstock_front
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - api
 
 volumes:
   mysql_data:

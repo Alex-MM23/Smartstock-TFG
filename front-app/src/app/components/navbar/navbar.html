@@ -1,0 +1,38 @@
+<nav class="navbar" role="navigation" aria-label="Navegación principal">
+  <div class="nav-container container">
+    <!-- Brand -->
+    <a routerLink="/home" class="nav-brand" aria-label="SmartStock AI - Inicio">
+      <span class="logo" aria-hidden="true">📦</span>
+      <span class="brand-name">SmartStock AI</span>
+    </a>
+
+    <!-- Navigation links -->
+    <div class="nav-menu" role="menubar">
+      <a routerLink="/home" class="nav-link" role="menuitem">Inicio</a>
+      <a routerLink="/shop" class="nav-link" role="menuitem">Tienda</a>
+      <a routerLink="/cart" class="nav-link" role="menuitem">
+        Carrito
+        <span class="cart-badge badge badge-primary" *ngIf="cartItemCount$ | async as count">{{ count }}</span>
+      </a>
+      <a routerLink="/orders" class="nav-link" role="menuitem">Mis Pedidos</a>
+      @if (isAdmin()) {
+        <a routerLink="/admin" class="nav-link" role="menuitem">Administración</a>
+        <a routerLink="/health" class="nav-link" role="menuitem">🔍 Diagnóstico</a>
+      }
+    </div>
+
+    <!-- User options -->
+    @if (isLoggedIn) {
+      <div class="nav-user">
+        <img [src]="userAvatar" [alt]="'Avatar de ' + userName" class="user-avatar" />
+        <span class="user-name">{{ userName }}</span>
+        <button class="btn btn-ghost btn-sm" (click)="logout()" type="button">Cerrar sesión</button>
+      </div>
+    } @else {
+      <div class="nav-auth">
+        <a routerLink="/login" class="btn btn-ghost btn-sm" role="button">Iniciar sesión</a>
+        <a routerLink="/auth" class="btn btn-primary btn-sm" role="button">Registrarse</a>
+      </div>
+    }
+  </div>
+</nav>

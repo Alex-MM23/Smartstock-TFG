@@ -1,0 +1,26 @@
+# Backend .dockerignore
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+.env
+.venv
+venv/
+env/
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.sqlite
+*.db
+artifacts/*.joblib
+artifacts/*.json
+docker-compose*.yml
+Dockerfile*
+*.md
+tests/
+.pytest_cache/
+.coverage
+htmlcov/

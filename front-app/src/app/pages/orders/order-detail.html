@@ -1,0 +1,131 @@
+<div class="order-detail-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="container">
+      <div class="page-header-content">
+        <div>
+          <h1 class="page-title">Detalle del Pedido</h1>
+          <p class="page-subtitle" *ngIf="order">Pedido #{{ order.id }}</p>
+        </div>
+        <button class="btn btn-outline" (click)="goBack()" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Volver
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-main">
+    <div class="container">
+      <!-- Error State -->
+      <div *ngIf="errorMessage" class="alert alert-error mb-6" role="alert">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <div>{{ errorMessage }}</div>
+        <button class="btn btn-ghost btn-sm" (click)="goBack()" type="button">
+          Volver a Mis Pedidos
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading && !errorMessage" class="loading-state">
+        <div class="skeleton" style="height: 160px; border-radius: var(--border-radius-lg);"></div>
+        <div class="skeleton" style="height: 160px; border-radius: var(--border-radius-lg); margin-top: var(--space-4);"></div>
+      </div>
+
+      <!-- Order Detail -->
+      <div *ngIf="!loading && order" class="order-detail-layout">
+        <!-- Order Header Info -->
+        <section class="order-header-detail card p-6 mb-6">
+          <div class="order-header-grid">
+            <div class="order-identity">
+              <div class="order-id-group">
+                <span class="order-label">Pedido</span>
+                <span class="order-number">#{{ order.id || 'N/A' }}</span>
+              </div>
+              <time class="order-date" [attr.datetime]="order.created_at">
+                {{ order.created_at ? (order.created_at | date:'dd MMM yyyy, HH:mm') : 'Fecha desconocida' }}
+              </time>
+            </div>
+            <div class="order-status-wrapper">
+              <span class="badge status-badge" [ngClass]="getStatusClass(order.status)">
+                {{ getStatusLabel(order.status) }}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Order Items -->
+        <section class="order-items-section card" aria-labelledby="items-heading">
+          <header class="card-header p-4 border-bottom">
+            <h2 id="items-heading" class="section-title mb-0">Artículos del Pedido</h2>
+          </header>
+          <div class="order-items-list" *ngIf="order.items && order.items.length > 0">
+            @for (item of order.items; track item.product_id) {
+              <div class="order-item-detail" role="listitem">
+                <div class="item-main">
+                  <div class="item-info">
+                    <h3 class="item-name">{{ item.product_name || ('Producto #' + item.product_id) }}</h3>
+                  </div>
+                  <div class="item-qty">
+                    <span class="qty-label">Cantidad</span>
+                    <span class="qty-value">x{{ item.quantity }}</span>
+                  </div>
+                  <div class="item-price">
+                    <span class="price-label">Precio unit.</span>
+                    <span class="price-value">{{ item.price | currency:'EUR' }}</span>
+                  </div>
+                  <div class="item-subtotal">
+                    <span class="subtotal-label">Subtotal</span>
+                    <span class="subtotal-value">{{ (item.price * item.quantity) | currency:'EUR' }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <div *ngIf="!order.items || order.items.length === 0" class="p-4 text-center text-secondary">
+            No hay artículos en este pedido
+          </div>
+        </section>
+
+        <!-- Order Summary -->
+        <section class="order-summary-section card p-6">
+          <h2 class="section-title mb-4">Resumen del Pedido</h2>
+          <dl class="summary-list">
+            <div class="summary-row">
+              <dt>Subtotal ({{ order.items?.reduce((acc, item) => acc + item.quantity, 0) || 0 }} art.)</dt>
+              <dd>{{ order.total_amount | currency:'EUR' }}</dd>
+            </div>
+            <div class="summary-row">
+              <dt>Envío</dt>
+              <dd class="text-success">Gratis</dd>
+            </div>
+            <div class="summary-row summary-divider">
+              <dt>Total</dt>
+              <dd>{{ order.total_amount | currency:'EUR' }}</dd>
+            </div>
+          </dl>
+          <p class="summary-note text-tertiary text-sm mt-4">
+            Los impuestos están incluidos. El pedido se registró en MySQL tras la confirmación.
+          </p>
+        </section>
+
+        <!-- Actions -->
+        <div class="order-actions-bar">
+          <button class="btn btn-outline btn-block" (click)="goBack()" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Volver a Mis Pedidos
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,36 @@
+# This file is kept for reference. The main docker-compose.yml is at the project root (Back/).
+# Use: docker-compose -f ../docker-compose.yml up -d
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: smartstock_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: smartstock
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: smartstock
+      MYSQL_PASSWORD: smartstock_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  api:
+    build: ..
+    container_name: smartstock_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=smartstock
+      - DB_PASSWORD=smartstock_pass
+      - DB_NAME=smartstock
+    depends_on:
+      - db
+
+volumes:
+  mysql_data:

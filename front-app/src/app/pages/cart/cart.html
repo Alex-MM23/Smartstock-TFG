@@ -1,0 +1,210 @@
+<div class="cart-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="container">
+      <h1 class="page-title">Carrito de Compras</h1>
+      <p class="page-subtitle">Revisa tu pedido antes de confirmar la compra</p>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page-main">
+    <div class="container">
+      <!-- Success State -->
+      <div *ngIf="orderSuccess" class="alert alert-success mb-6" role="alert">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <div>
+          <strong>¡Pedido realizado con éxito!</strong>
+          <p class="mb-0">Tu pedido ha sido registrado en la base de datos MySQL. Redirigiendo a tu historial...</p>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="errorMessage && !orderSuccess" class="alert alert-error mb-6" role="alert">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <div>{{ errorMessage }}</div>
+      </div>
+
+      <!-- Cart Content -->
+      <div *ngIf="cartItems.length > 0 && !orderSuccess" class="cart-layout">
+        <!-- Cart Items -->
+        <section class="cart-items-section" aria-labelledby="cart-items-heading">
+          <h2 id="cart-items-heading" class="section-title mb-6">Artículos ({{ getTotalItems() }})</h2>
+
+          <div class="cart-items-list" role="list">
+            @for (item of cartItems; track item.id; let i = $index) {
+              <article class="cart-item card" role="listitem">
+                <div class="cart-item-image-wrapper">
+                  <img
+                    [src]="item.image || placeholderImage"
+                    [alt]="item.title"
+                    class="cart-item-image"
+                    [loading]="i === 0 ? 'eager' : 'lazy'"
+                  />
+                </div>
+
+                <div class="cart-item-details">
+                  <h3 class="cart-item-title">{{ item.title }}</h3>
+                  <p class="cart-item-category">{{ item.category || 'General' }}</p>
+                  <p class="cart-item-price">{{ item.price | currency:'EUR' }}</p>
+                </div>
+
+                <div class="cart-item-quantity">
+                  <label for="qty-{{ item.id }}" class="visually-hidden">Cantidad de {{ item.title }}</label>
+                  <div class="quantity-input-group">
+                    <button
+                      id="decrease-{{ item.id }}"
+                      type="button"
+                      class="btn btn-outline btn-qty"
+                      (click)="decreaseQuantity(item)"
+                      [disabled]="item.cantidad <= 1"
+                      aria-label="Disminuir cantidad de {{ item.title }}"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                      </svg>
+                    </button>
+                    <input
+                      id="qty-{{ item.id }}"
+                      type="number"
+                      [value]="item.cantidad"
+                      min="1"
+                      max="99"
+                      class="form-input quantity-input"
+                      readonly
+                      aria-label="Cantidad: {{ item.cantidad }}"
+                    />
+                    <button
+                      id="increase-{{ item.id }}"
+                      type="button"
+                      class="btn btn-outline btn-qty"
+                      (click)="increaseQuantity(item)"
+                      aria-label="Aumentar cantidad de {{ item.title }}"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="cart-item-subtotal">
+                  <span class="subtotal-label">Subtotal</span>
+                  <span class="subtotal-value">{{ (item.price * item.cantidad) | currency:'EUR' }}</span>
+                </div>
+
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-icon"
+                  (click)="removeItem(item.id)"
+                  aria-label="Eliminar {{ item.title }} del carrito"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </article>
+            }
+          </div>
+        </section>
+
+        <!-- Cart Summary -->
+        <aside class="cart-summary-section" aria-labelledby="summary-heading">
+          <div class="card p-6 sticky-top" style="top: calc(var(--header-height) + var(--space-6));">
+            <h2 id="summary-heading" class="section-title mb-6">Resumen del Pedido</h2>
+
+            <!-- Lista resumida de artículos en el pedido -->
+            <div class="summary-items mb-6" role="list" aria-label="Artículos del pedido">
+              @for (item of cartItems; track item.id) {
+                <div class="summary-item" role="listitem">
+                  <div class="summary-item-info">
+                    <span class="summary-item-name">{{ item.title }}</span>
+                    <span class="summary-item-qty">× {{ item.cantidad }}</span>
+                  </div>
+                  <span class="summary-item-subtotal">{{ (item.price * item.cantidad) | currency:'EUR' }}</span>
+                </div>
+              }
+            </div>
+
+            <dl class="summary-list">
+              <div class="summary-row">
+                <dt>Subtotal ({{ getTotalItems() }} art.)</dt>
+                <dd>{{ totalAmount | currency:'EUR' }}</dd>
+              </div>
+              <div class="summary-row">
+                <dt>Envío</dt>
+                <dd class="text-success">Gratis</dd>
+              </div>
+              <div class="summary-row summary-divider">
+                <dt>Total</dt>
+                <dd>{{ totalAmount | currency:'EUR' }}</dd>
+              </div>
+            </dl>
+
+            <p class="summary-note text-tertiary text-sm">
+              Los impuestos están incluidos. El pedido se registra en MySQL tras la confirmación.
+            </p>
+
+            <button
+              (click)="checkout()"
+              class="btn btn-primary btn-block btn-lg mt-6"
+              [disabled]="isSubmitting"
+            >
+              <span *ngIf="isSubmitting" class="flex items-center justify-center gap-2">
+                <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1">
+                    <animateTransform attributeName="transform" type="rotate" dur="1s" from="0 12 12" to="360 12 12" repeatCount="indefinite"/>
+                  </path>
+                </svg>
+                Procesando en Base de Datos...
+              </span>
+              <span *ngIf="!isSubmitting">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                Confirmar y Pagar
+              </span>
+            </button>
+
+            <a routerLink="/shop" class="btn btn-outline btn-block mt-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              Continuar Comprando
+            </a>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Empty Cart -->
+      <div *ngIf="cartItems.length === 0 && !orderSuccess" class="empty-cart card p-12 text-center">
+        <div class="empty-icon mb-4">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1 0 8"/>
+          </svg>
+        </div>
+        <h2 class="mb-2">Tu carrito está vacío</h2>
+        <p class="text-secondary mb-6">Aún no has añadido ningún producto. Explora nuestra tienda y encuentra lo que necesitas.</p>
+        <a routerLink="/shop" class="btn btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="me-2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+          Ir a la Tienda
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
